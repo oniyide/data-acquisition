@@ -11,6 +11,11 @@ class OpinionsSpider(scrapy.Spider):
     base_url = 'https://www.debate.org'
     start_urls = [
         'https://www.debate.org/opinions/?sort=popular',
+        'https://www.debate.org/opinions/kirk-will-always-be-better-than-picard',
+        'https://www.debate.org/opinions/opinions/do-you-agree-with-the-black-lives-matter-movement-1',
+        'https://www.debate.org/opinions/opinions/we-should-institute-a-death-penalty-for-homophiles-and-transexualists',
+        'https://www.debate.org/opinions/do-you-agree-with-the-derek-chauvin-guilty-verdict-announced-on-april-20-2021',
+        'https://www.debate.org/opinions/is-lgbtq-wrong',
     ]
     custom_settings = {'ROBOTSTXT_OBEY': False}
     ajax_url = 'https://www.debate.org/opinions/~services/opinions.asmx/GetDebateArgumentPage'
@@ -46,22 +51,28 @@ class OpinionsSpider(scrapy.Spider):
         super(OpinionsSpider, self).__init__(*args, **kwargs)
         self.start_urls = [kwargs.get('start_url')]
     '''
+
+    def start_requests(self):
+        for x in range(6):
+            if x == 0:
+                yield scrapy.Request(url='https://www.debate.org/opinions/?sort=popular', callback=self.parse)
+            else:
+                yield scrapy.Request(url=self.start_urls[x], callback=self.parse)
+    '''
     def start_requests(self):
         for url in self.start_urls:
             if url == 'https://www.debate.org/opinions/?sort=popular':
                 yield scrapy.Request(url=url, callback=self.parse)
             else:
                 yield scrapy.Request(url=self.url, callback=self.parse)
+    '''
 
     def parse(self, response):
         page = response.url
         if page == 'https://www.debate.org/opinions/?sort=popular':
-            self.start_urls.clear()
             for x in range(5):
                 url = response.css("a.a-image-contain")[x].attrib['href']
                 self.start_urls.append(self.base_url + url)
-            yield {'urls': self.start_urls}
-            self.start_requests()
         else:
             topic = response.css('span.q-title::text').get()
             category = category = response.css('div#breadcrumb a::text')[2].get()
