@@ -41,6 +41,7 @@ class OpinionsSpider(scrapy.Spider):
     topic = ''
     category = ''
     popular_urls = []
+    stats = []
 
     @staticmethod
     def construct_json_str(index, debateId):
@@ -81,7 +82,10 @@ class OpinionsSpider(scrapy.Spider):
                                       'topic': topic,
                                       'category': category,
                                       'pro_arguments': [],
-                                      'con_arguments': [], })
+                                      'con_arguments': [],
+                                      'pro_arg_count': 0,
+                                      'con_arg_count': 0,
+                                  })
 
     def parse_detail(self, response):
         loaded_data = json.loads(response.body)
@@ -96,6 +100,7 @@ class OpinionsSpider(scrapy.Spider):
             con_html_res = HtmlResponse(url="con arguments", body=con_html, encoding='utf-8')
 
             if bool(pro_html_res):
+                response.meta['pro_arg_count'] += len(pro_html_res.css('li.hasData'))
                 for pro_htm in pro_html_res.css('li.hasData'):
                     title = pro_htm.css('h2::text').get()
                     if title is None:
@@ -110,6 +115,7 @@ class OpinionsSpider(scrapy.Spider):
                         'body': body
                     })
             if bool(con_html_res):
+                response.meta['con_arg_count'] += len(con_html_res.css('li.hasData'))
                 for con_htm in con_html_res.css('li.hasData'):
                     title = con_htm.css('h2::text').get()
                     if title is None:
@@ -139,20 +145,28 @@ class OpinionsSpider(scrapy.Spider):
                                           'topic': response.meta['topic'],
                                           'category': response.meta['category'],
                                           'pro_arguments': response.meta['pro_arguments'],
-                                          'con_arguments': response.meta['con_arguments']})
+                                          'con_arguments': response.meta['con_arguments'],
+                                          'pro_arg_count': response.meta['pro_arg_count'],
+                                          'con_arg_count': response.meta['con_arg_count'],
+                                      })
         else:
-            print("I'm here" + d)
             yield {
                 'topic': response.meta['topic'],
                 'category': response.meta['category'],
                 'pro_arguments': response.meta['pro_arguments'],
                 'con_arguments': response.meta['con_arguments']
             }
+            self.stats.append({
+                'topic': response.meta['topic'],
+                'category': response.meta['category'],
+                'pro_arg_count': response.meta['pro_arg_count'],
+                'con_arg_count': response.meta['con_arg_count']
+            })
             self.pro_arguments.clear()
             self.con_arguments.clear()
 
     def closed(self, reason):
-        print("We are done at this point")
+        print(self.stats)
         objects = ('Python', 'C++', 'Java', 'Perl', 'Scala', 'Lisp')
         y_pos = np.arange(len(objects))
         performance = [10, 8, 6, 4, 2, 1]
