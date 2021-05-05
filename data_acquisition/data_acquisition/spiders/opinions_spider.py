@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 
 class OpinionsSpider(scrapy.Spider):
-    name = 'opinions'
+    name = 'debate_crawler'
     allowed_domains = ['debate.org']
     base_url = 'https://www.debate.org'
     start_urls = [
@@ -19,7 +19,7 @@ class OpinionsSpider(scrapy.Spider):
     ]
     custom_settings = {'ROBOTSTXT_OBEY': False,
                        'FEED_FORMAT': 'json',
-                       'FEED_URI': 'result.json'
+                       'FEED_URI': 'data.json'
                        }
     ajax_url = 'https://www.debate.org/opinions/~services/opinions.asmx/GetDebateArgumentPage'
     headers = {
@@ -52,7 +52,7 @@ class OpinionsSpider(scrapy.Spider):
                ',"ysort":"5"}'
 
     def start_requests(self):
-        open('./result.json', 'w').close()
+        open('./data.json', 'w').close()
         page = 'https://www.debate.org/opinions/?sort=popular'
         yield scrapy.http.Request(page, callback=self.parse_1)
 
@@ -167,16 +167,40 @@ class OpinionsSpider(scrapy.Spider):
 
     def closed(self, reason):
         print(self.stats)
-        # histogram of argument lengths
+        # histogram of arguments length
+
+        # histogram of arguments
         topics = [''.join([x[0] for x in o['topic'].split()])[0:5] for o in self.stats]
         y_pos = np.arange(len(topics))
         arg_lengths = [o['pro_arg_count'] + o['con_arg_count'] for o in self.stats]
         plt.bar(y_pos, arg_lengths, align='center', alpha=0.5)
         plt.xticks(y_pos, topics)
-        plt.ylabel('Argument Length')
+        plt.ylabel('Argument Count')
+        plt.xlabel('Topics')
         plt.rc('xtick', labelsize=6)  # fontsize of the tick labels
-        plt.title('Histogram of argument lengths')
+        plt.title('Bar chart of argument')
         plt.show()
+        ########
 
         # histogram of number of pro/con argument per topic
+        labels = [''.join([x[0] for x in o['topic'].split()])[0:5] for o in self.stats]
+        pro_counts = [o['pro_arg_count'] for o in self.stats]
+        con_counts = [o['con_arg_count'] for o in self.stats]
+        x = np.arange(len(labels))  # the label locations
+        width = 0.35  # the width of the bars
+        fig, ax = plt.subplots()
+        rects1 = ax.bar(x - width / 2, pro_counts, width, label='Pro Arguments')
+        rects2 = ax.bar(x + width / 2, con_counts, width, label='Con Arguments')
+        # Add some text for labels, title and custom x-axis tick labels, etc.
+        ax.set_ylabel('Number of Arguments')
+        ax.set_xlabel('Topics')
+        ax.set_title('Histogram of number of pro/con argument per topic')
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels)
+        ax.legend()
+        ax.bar_label(rects1, padding=3)
+        ax.bar_label(rects2, padding=3)
+        fig.tight_layout()
+        plt.show()
 
+        # histogram of number of pro/con argument per Category
