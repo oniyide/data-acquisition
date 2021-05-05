@@ -3,6 +3,11 @@ from scrapy.http import HtmlResponse
 import logging
 import json
 from ..items import DataAcquisitionItem
+import matplotlib.pyplot as plt
+
+plt.rcdefaults()
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 class OpinionsSpider(scrapy.Spider):
@@ -46,11 +51,11 @@ class OpinionsSpider(scrapy.Spider):
                ',"ysort":"5"}'
 
     def start_requests(self):
+        open('./result.json', 'w').close()
         page = 'https://www.debate.org/opinions/?sort=popular'
         yield scrapy.http.Request(page, callback=self.parse_1)
 
     def parse_1(self, response):
-        print("here")
         for x in range(5):
             url = response.css("a.a-image-contain")[x].attrib['href']
             self.popular_urls.append(self.base_url + url)
@@ -145,3 +150,15 @@ class OpinionsSpider(scrapy.Spider):
             }
             self.pro_arguments.clear()
             self.con_arguments.clear()
+
+    def closed(self, reason):
+        print("We are done at this point")
+        objects = ('Python', 'C++', 'Java', 'Perl', 'Scala', 'Lisp')
+        y_pos = np.arange(len(objects))
+        performance = [10, 8, 6, 4, 2, 1]
+
+        plt.bar(y_pos, performance, align='center', alpha=0.5)
+        plt.xticks(y_pos, objects)
+        plt.ylabel('Usage')
+        plt.title('Programming language usage')
+        plt.show()
