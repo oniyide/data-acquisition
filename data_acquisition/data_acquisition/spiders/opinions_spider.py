@@ -167,12 +167,16 @@ class OpinionsSpider(scrapy.Spider):
 
     def closed(self, reason):
         print(self.stats)
-        objects = ('Python', 'C++', 'Java', 'Perl', 'Scala', 'Lisp')
-        y_pos = np.arange(len(objects))
-        performance = [10, 8, 6, 4, 2, 1]
-
-        plt.bar(y_pos, performance, align='center', alpha=0.5)
-        plt.xticks(y_pos, objects)
-        plt.ylabel('Usage')
-        plt.title('Programming language usage')
+        # histogram of argument lengths
+        topics = [''.join([x[0] for x in o['topic'].split()])[0:5] for o in self.stats]
+        y_pos = np.arange(len(topics))
+        arg_lengths = [o['pro_arg_count'] + o['con_arg_count'] for o in self.stats]
+        plt.bar(y_pos, arg_lengths, align='center', alpha=0.5)
+        plt.xticks(y_pos, topics)
+        plt.ylabel('Argument Length')
+        plt.rc('xtick', labelsize=6)  # fontsize of the tick labels
+        plt.title('Histogram of argument lengths')
         plt.show()
+
+        # histogram of number of pro/con argument per topic
+
