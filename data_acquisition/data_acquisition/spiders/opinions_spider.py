@@ -1,3 +1,5 @@
+import datetime
+
 import scrapy
 from scrapy.http import HtmlResponse
 import logging
@@ -6,7 +8,11 @@ from ..items import DataAcquisitionItem
 import matplotlib.pyplot as plt
 import numpy as np
 import w3lib.html
+import nltk
+from datetime import datetime
+from matplotlib.backends.backend_pdf import PdfPages
 plt.rcdefaults()
+nltk.download('punkt')
 
 
 class OpinionsSpider(scrapy.Spider):
@@ -42,6 +48,7 @@ class OpinionsSpider(scrapy.Spider):
     popular_urls = []
     stats = []
     category_stats = []
+    token_counts = []
 
     @staticmethod
     def construct_json_str(index, debateId):
@@ -107,6 +114,7 @@ class OpinionsSpider(scrapy.Spider):
                         title = pro_htm.css('h2 a::text').get()
                     raw_body = pro_htm.css('li.hasData p').get()
                     body = w3lib.html.remove_tags(raw_body)
+                    self.token_counts.append(len(nltk.word_tokenize(body)))
                     response.meta['pro_arguments'].append({
                         'title': title,
                         'body': body })
@@ -118,6 +126,7 @@ class OpinionsSpider(scrapy.Spider):
                         title = con_htm.css('h2 a::text').get()
                     raw_body = con_htm.css('li.hasData p').get()
                     body = w3lib.html.remove_tags(raw_body)
+                    self.token_counts.append(len(nltk.word_tokenize(body)))
                     response.meta['con_arguments'].append({
                         'title': title,
                         'body': body})
@@ -140,7 +149,7 @@ class OpinionsSpider(scrapy.Spider):
                                           'pro_arguments': response.meta['pro_arguments'],
                                           'con_arguments': response.meta['con_arguments'],
                                           'pro_arg_count': response.meta['pro_arg_count'],
-                                          'con_arg_count': response.meta['con_arg_count'],})
+                                          'con_arg_count': response.meta['con_arg_count']})
         else:
             yield {
                 'topic': response.meta['topic'],
@@ -176,62 +185,78 @@ class OpinionsSpider(scrapy.Spider):
 
     def closed(self, reason):
         print(self.stats)
-        print(self.category_stats)
-
         # histogram of arguments length
+        timestamp = datetime.now().strftime("%Y_%m_%d-%I:%M:%S_%p").replace(":", "")
+        with PdfPages('./rendered_stats-' + timestamp + '.pdf') as pdf:
 
-        # histogram of arguments
-        topics = [''.join([x[0] for x in o['topic'].split()])[0:5] for o in self.stats]
-        y_pos = np.arange(len(topics))
-        arg_lengths = [o['pro_arg_count'] + o['con_arg_count'] for o in self.stats]
-        plt.bar(y_pos, arg_lengths, align='center', alpha=0.5)
-        plt.xticks(y_pos, topics)
-        plt.ylabel('Argument Count')
-        plt.xlabel('Topics')
-        plt.rc('xtick', labelsize=6)  # fontsize of the tick labels
-        plt.title('Bar chart of argument counts')
-        plt.show()
+            plt.hist(self.token_counts, bins=10, edgecolor='black')
+            plt.title('Histogram of argument lengths')
+            plt.xlabel('Length of arguments (as number of tokens)')
+            plt.ylabel('Number of arguments')
+            plt.tight_layout()
+            pdf.savefig()
+            plt.close()
 
-        ########
-        # histogram of number of pro/con argument per topic
-        labels = [''.join([x[0] for x in o['topic'].split()])[0:5] for o in self.stats]
-        pro_counts = [o['pro_arg_count'] for o in self.stats]
-        con_counts = [o['con_arg_count'] for o in self.stats]
-        x = np.arange(len(labels))  # the label locations
-        width = 0.35  # the width of the bars
-        fig, ax = plt.subplots()
-        rects1 = ax.bar(x - width / 2, pro_counts, width, label='Pro Arguments')
-        rects2 = ax.bar(x + width / 2, con_counts, width, label='Con Arguments')
-        # Add some text for labels, title and custom x-axis tick labels, etc.
-        ax.set_ylabel('Number of Arguments')
-        ax.set_xlabel('Topics')
-        ax.set_title('Histogram of number of pro/con argument per topic')
-        ax.set_xticks(x)
-        ax.set_xticklabels(labels)
-        ax.legend()
-        ax.bar_label(rects1, padding=3)
-        ax.bar_label(rects2, padding=3)
-        fig.tight_layout()
-        plt.show()
+            ########
+            # histogram of arguments
+            topics = [''.join([x[0] for x in o['topic'].split()])[0:5] for o in self.stats]
+            y_pos = np.arange(len(topics))
+            arg_lengths = [o['pro_arg_count'] + o['con_arg_count'] for o in self.stats]
+            plt.bar(y_pos, arg_lengths, align='center', alpha=0.5)
+            plt.xticks(y_pos, topics)
+            plt.ylabel('Argument Count')
+            plt.xlabel('Topics')
+            plt.rc('xtick', labelsize=6)  # fontsize of the tick labels
+            plt.title('Bar chart of argument counts')
+            pdf.savefig()
+            plt.close()
 
-        ########
-        # histogram of number of pro/con argument per Category
-        labels = [o['category'] for o in self.category_stats]
-        pro_counts = [o['pro_arg_count'] for o in self.category_stats]
-        con_counts = [o['con_arg_count'] for o in self.category_stats]
-        x = np.arange(len(labels))  # the label locations
-        width = 0.35  # the width of the bars
-        fig, ax = plt.subplots()
-        rects1 = ax.bar(x - width / 2, pro_counts, width, label='Pro Arguments')
-        rects2 = ax.bar(x + width / 2, con_counts, width, label='Con Arguments')
-        # Add some text for labels, title and custom x-axis tick labels, etc.
-        ax.set_ylabel('Number of Arguments')
-        ax.set_xlabel('Topics')
-        ax.set_title('Histogram of number of pro/con argument per category')
-        ax.set_xticks(x)
-        ax.set_xticklabels(labels)
-        ax.legend()
-        ax.bar_label(rects1, padding=3)
-        ax.bar_label(rects2, padding=3)
-        fig.tight_layout()
-        plt.show()
+            ########
+            # histogram of number of pro/con argument per topic
+            labels = [''.join([x[0] for x in o['topic'].split()])[0:5] for o in self.stats]
+            pro_counts = [o['pro_arg_count'] for o in self.stats]
+            con_counts = [o['con_arg_count'] for o in self.stats]
+            x = np.arange(len(labels))  # the label locations
+            width = 0.35  # the width of the bars
+            fig, ax = plt.subplots()
+            rects1 = ax.bar(x - width / 2, pro_counts, width, label='Pro Arguments')
+            rects2 = ax.bar(x + width / 2, con_counts, width, label='Con Arguments')
+            ax.set_ylabel('Number of Arguments')
+            ax.set_xlabel('Topics')
+            ax.set_title('Bar chart of number of pro/con argument per topic')
+            ax.set_xticks(x)
+            ax.set_xticklabels(labels)
+            ax.legend()
+            ax.bar_label(rects1, padding=3)
+            ax.bar_label(rects2, padding=3)
+            fig.tight_layout()
+            pdf.savefig()
+            plt.close()
+
+            ########
+            # histogram of number of pro/con argument per Category
+            labels = [o['category'] for o in self.category_stats]
+            pro_counts = [o['pro_arg_count'] for o in self.category_stats]
+            con_counts = [o['con_arg_count'] for o in self.category_stats]
+            x = np.arange(len(labels))  # the label locations
+            width = 0.35  # the width of the bars
+            fig, ax = plt.subplots()
+            rects1 = ax.bar(x - width / 2, pro_counts, width, label='Pro Arguments')
+            rects2 = ax.bar(x + width / 2, con_counts, width, label='Con Arguments')
+            # Add some text for labels, title and custom x-axis tick labels, etc.
+            ax.set_ylabel('Number of Arguments')
+            ax.set_xlabel('Category')
+            ax.set_title('Bar chart of number of pro/con argument per category')
+            ax.set_xticks(x)
+            ax.set_xticklabels(labels)
+            ax.legend()
+            ax.bar_label(rects1, padding=3)
+            ax.bar_label(rects2, padding=3)
+            pdf.savefig()
+            plt.close()
+
+            d = pdf.infodict()
+            d['Title'] = 'Multipage PDF Example'
+            d['Author'] = u'OnKaLaNa\xe4nen'
+            d['Subject'] = 'Preliminary Statistics - Perform preliminary statistics to learn about the crawled data'
+            d['Keywords'] = 'Data Crawling'
