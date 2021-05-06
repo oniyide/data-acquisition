@@ -42,6 +42,7 @@ class OpinionsSpider(scrapy.Spider):
     category = ''
     popular_urls = []
     stats = []
+    category_stats = []
 
     @staticmethod
     def construct_json_str(index, debateId):
@@ -162,11 +163,32 @@ class OpinionsSpider(scrapy.Spider):
                 'pro_arg_count': response.meta['pro_arg_count'],
                 'con_arg_count': response.meta['con_arg_count']
             })
+
+            if len(self.category_stats) == 0:
+                self.category_stats.append({
+                    'category': response.meta['category'],
+                    'pro_arg_count': response.meta['pro_arg_count'],
+                    'con_arg_count': response.meta['con_arg_count'],})
+            else:
+                if not any(x['category'] == response.meta['category'] for x in self.category_stats):
+                    self.category_stats.append({
+                        'category': response.meta['category'],
+                        'pro_arg_count': response.meta['pro_arg_count'],
+                        'con_arg_count': response.meta['con_arg_count'],})
+                else:
+                    for x in range(len(self.category_stats)):
+                        if self.category_stats[x]['category'] == response.meta['category']:
+                            self.category_stats[x]['pro_arg_count'] += response.meta['pro_arg_count']
+                            self.category_stats[x]['con_arg_count'] += response.meta['con_arg_count']
+                            break
             self.pro_arguments.clear()
             self.con_arguments.clear()
 
+
     def closed(self, reason):
         print(self.stats)
+        print(self.category_stats)
+
         # histogram of arguments length
 
         # histogram of arguments
@@ -178,7 +200,7 @@ class OpinionsSpider(scrapy.Spider):
         plt.ylabel('Argument Count')
         plt.xlabel('Topics')
         plt.rc('xtick', labelsize=6)  # fontsize of the tick labels
-        plt.title('Bar chart of argument')
+        plt.title('Bar chart of argument counts')
         plt.show()
         ########
 
@@ -202,5 +224,5 @@ class OpinionsSpider(scrapy.Spider):
         ax.bar_label(rects2, padding=3)
         fig.tight_layout()
         plt.show()
-
+        '''
         # histogram of number of pro/con argument per Category
