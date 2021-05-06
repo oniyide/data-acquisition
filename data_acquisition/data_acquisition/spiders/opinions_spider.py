@@ -4,10 +4,9 @@ import logging
 import json
 from ..items import DataAcquisitionItem
 import matplotlib.pyplot as plt
-
-plt.rcdefaults()
 import numpy as np
-import matplotlib.pyplot as plt
+import w3lib.html
+plt.rcdefaults()
 
 
 class OpinionsSpider(scrapy.Spider):
@@ -106,29 +105,22 @@ class OpinionsSpider(scrapy.Spider):
                     title = pro_htm.css('h2::text').get()
                     if title is None:
                         title = pro_htm.css('h2 a::text').get()
-                    raw_body = pro_htm.css('li.hasData p')
-
-                    body = ''
-                    for txt in raw_body:
-                        body += txt.css('::text').get() + " "
+                    raw_body = pro_htm.css('li.hasData p').get()
+                    body = w3lib.html.remove_tags(raw_body)
                     response.meta['pro_arguments'].append({
                         'title': title,
-                        'body': body
-                    })
+                        'body': body })
             if bool(con_html_res):
                 response.meta['con_arg_count'] += len(con_html_res.css('li.hasData'))
                 for con_htm in con_html_res.css('li.hasData'):
                     title = con_htm.css('h2::text').get()
                     if title is None:
                         title = con_htm.css('h2 a::text').get()
-                    raw_body = con_htm.css('li.hasData p')
-                    body = ''
-                    for txt in raw_body:
-                        body += txt.css('::text').get() + "\\n"
+                    raw_body = con_htm.css('li.hasData p').get()
+                    body = w3lib.html.remove_tags(raw_body)
                     response.meta['con_arguments'].append({
                         'title': title,
-                        'body': body
-                    })
+                        'body': body})
             previous_index = response.meta['index']
             index = previous_index + 1
             # data = self.data
@@ -148,8 +140,7 @@ class OpinionsSpider(scrapy.Spider):
                                           'pro_arguments': response.meta['pro_arguments'],
                                           'con_arguments': response.meta['con_arguments'],
                                           'pro_arg_count': response.meta['pro_arg_count'],
-                                          'con_arg_count': response.meta['con_arg_count'],
-                                      })
+                                          'con_arg_count': response.meta['con_arg_count'],})
         else:
             yield {
                 'topic': response.meta['topic'],
@@ -163,18 +154,17 @@ class OpinionsSpider(scrapy.Spider):
                 'pro_arg_count': response.meta['pro_arg_count'],
                 'con_arg_count': response.meta['con_arg_count']
             })
-
             if len(self.category_stats) == 0:
                 self.category_stats.append({
                     'category': response.meta['category'],
                     'pro_arg_count': response.meta['pro_arg_count'],
-                    'con_arg_count': response.meta['con_arg_count'],})
+                    'con_arg_count': response.meta['con_arg_count'], })
             else:
                 if not any(x['category'] == response.meta['category'] for x in self.category_stats):
                     self.category_stats.append({
                         'category': response.meta['category'],
                         'pro_arg_count': response.meta['pro_arg_count'],
-                        'con_arg_count': response.meta['con_arg_count'],})
+                        'con_arg_count': response.meta['con_arg_count'], })
                 else:
                     for x in range(len(self.category_stats)):
                         if self.category_stats[x]['category'] == response.meta['category']:
@@ -183,7 +173,6 @@ class OpinionsSpider(scrapy.Spider):
                             break
             self.pro_arguments.clear()
             self.con_arguments.clear()
-
 
     def closed(self, reason):
         print(self.stats)
