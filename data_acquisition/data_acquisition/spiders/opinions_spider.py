@@ -202,8 +202,8 @@ class OpinionsSpider(scrapy.Spider):
         plt.rc('xtick', labelsize=6)  # fontsize of the tick labels
         plt.title('Bar chart of argument counts')
         plt.show()
-        ########
 
+        ########
         # histogram of number of pro/con argument per topic
         labels = [''.join([x[0] for x in o['topic'].split()])[0:5] for o in self.stats]
         pro_counts = [o['pro_arg_count'] for o in self.stats]
@@ -224,5 +224,25 @@ class OpinionsSpider(scrapy.Spider):
         ax.bar_label(rects2, padding=3)
         fig.tight_layout()
         plt.show()
-        '''
+
+        ########
         # histogram of number of pro/con argument per Category
+        labels = [o['category'] for o in self.category_stats]
+        pro_counts = [o['pro_arg_count'] for o in self.category_stats]
+        con_counts = [o['con_arg_count'] for o in self.category_stats]
+        x = np.arange(len(labels))  # the label locations
+        width = 0.35  # the width of the bars
+        fig, ax = plt.subplots()
+        rects1 = ax.bar(x - width / 2, pro_counts, width, label='Pro Arguments')
+        rects2 = ax.bar(x + width / 2, con_counts, width, label='Con Arguments')
+        # Add some text for labels, title and custom x-axis tick labels, etc.
+        ax.set_ylabel('Number of Arguments')
+        ax.set_xlabel('Topics')
+        ax.set_title('Histogram of number of pro/con argument per category')
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels)
+        ax.legend()
+        ax.bar_label(rects1, padding=3)
+        ax.bar_label(rects2, padding=3)
+        fig.tight_layout()
+        plt.show()
