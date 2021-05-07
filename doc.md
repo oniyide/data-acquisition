@@ -41,26 +41,26 @@ We considered the total number of tokens as the length of arguments.
 The token number is the total count of words that was presented in the body of both pro and con arguments. 
 
 <p align="center">
-<img src="./images/ca4.JPG" alt="" width="500"/>
+<img src="./Images/ca4.JPG" alt="" width="500"/>
 </p>
 
 2.  **Bar chart of argument counts** 
 Here, x axis represents five different topics and y axis represents the total argument count. Argument count is the number of pro and con arguments for each topics.
 
 <p align="center">
-<img src="./images/ca3.JPG" alt="" width="500"/>
+<img src="./Images/ca3.JPG" alt="" width="500"/>
 </p>
 
 3. **Bar chart of number of pro/con argument per topic** The bar chart depicts the number of pro and con arguments for each topic.
   
 <p align="center">
-<img src="./images/ca2.JPG" alt="" width="500"/>
+<img src="./Images/ca2.JPG" alt="" width="500"/>
 </p>
 
 4. **Bar chart of number of pro/con arguments per category** This bar chart depicts the number of pro and con arguments for each distinct category.
 
 <p align="center">
-<img src="./images/ca1.JPG" alt="" width="500"/>
+<img src="./Images/ca1.JPG" alt="" width="500"/>
 </p>
 
 ### **Instructions to run the code** 
