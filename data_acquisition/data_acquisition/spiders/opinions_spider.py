@@ -199,7 +199,7 @@ class OpinionsSpider(scrapy.Spider):
 
             ########
             # histogram of arguments
-            topics = [''.join([x[0] for x in o['topic'].split()])[0:5] for o in self.stats]
+            topics = [''.join([x[0] for x in o['topic'].split()])[0:10] for o in self.stats]
             y_pos = np.arange(len(topics))
             arg_lengths = [o['pro_arg_count'] + o['con_arg_count'] for o in self.stats]
             plt.bar(y_pos, arg_lengths, align='center', alpha=0.5)
@@ -213,7 +213,7 @@ class OpinionsSpider(scrapy.Spider):
 
             ########
             # histogram of number of pro/con argument per topic
-            labels = [''.join([x[0] for x in o['topic'].split()])[0:5] for o in self.stats]
+            labels = [''.join([x[0] for x in o['topic'].split()])[0:10] for o in self.stats]
             pro_counts = [o['pro_arg_count'] for o in self.stats]
             con_counts = [o['con_arg_count'] for o in self.stats]
             x = np.arange(len(labels))  # the label locations
