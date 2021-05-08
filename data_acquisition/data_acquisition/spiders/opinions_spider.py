@@ -1,10 +1,7 @@
-import datetime
-
 import scrapy
 from scrapy.http import HtmlResponse
 import logging
 import json
-from ..items import DataAcquisitionItem
 import matplotlib.pyplot as plt
 import numpy as np
 import w3lib.html
@@ -40,7 +37,6 @@ class OpinionsSpider(scrapy.Spider):
         'Accept-Language': 'en-US,en;q=0.9,de-DE;q=0.8,de;q=0.7',
         'Cookie': '_ga=GA1.2.282588858.1619694587; _gid=GA1.2.2080027860.1619694587; DDOSession=d2ce97c1-e1e1-4143-b20e-d986937b2353; ASP.NET_SessionId=aot2zr1pcig025iqcn0qzeo2'
     }
-    items = DataAcquisitionItem()
     pro_arguments = []
     con_arguments = []
     topic = ''
@@ -71,9 +67,7 @@ class OpinionsSpider(scrapy.Spider):
 
     def parse(self, response):
         topic = response.css('span.q-title::text').get()
-        category = category = response.css('div#breadcrumb a::text')[2].get()
-        self.items['topic'] = self.topic
-        self.items['category'] = self.category
+        category = response.css('div#breadcrumb a::text')[2].get()
         debateId = response.css('div#voting').attrib['did']
         index = 1  # or 2?
         data = self.construct_json_str(index, debateId)
@@ -102,7 +96,6 @@ class OpinionsSpider(scrapy.Spider):
             arguments = d.split("{ddo.split}")
             pro_html = arguments[0]
             con_html = arguments[1]
-            # html = d[:-19]
             pro_html_res = HtmlResponse(url="pro arguments", body=pro_html, encoding='utf-8')
             con_html_res = HtmlResponse(url="con arguments", body=con_html, encoding='utf-8')
 
@@ -132,7 +125,6 @@ class OpinionsSpider(scrapy.Spider):
                         'body': body})
             previous_index = response.meta['index']
             index = previous_index + 1
-            # data = self.data
             debateId = response.meta['debateId']
             data = self.construct_json_str(index, debateId)
             yield scrapy.http.Request(self.ajax_url,
@@ -185,7 +177,6 @@ class OpinionsSpider(scrapy.Spider):
 
     def closed(self, reason):
         print(self.stats)
-        # histogram of arguments length
         timestamp = datetime.now().strftime("%Y_%m_%d-%I:%M:%S_%p").replace(":", "")
         with PdfPages('./rendered_stats-' + timestamp + '.pdf') as pdf:
 
@@ -212,7 +203,7 @@ class OpinionsSpider(scrapy.Spider):
             plt.close()
 
             ########
-            # histogram of number of pro/con argument per topic
+            # barchart of number of pro/con argument per topic
             labels = [''.join([x[0] for x in o['topic'].split()])[0:10] for o in self.stats]
             pro_counts = [o['pro_arg_count'] for o in self.stats]
             con_counts = [o['con_arg_count'] for o in self.stats]
@@ -234,7 +225,7 @@ class OpinionsSpider(scrapy.Spider):
             plt.close()
 
             ########
-            # histogram of number of pro/con argument per Category
+            # barchart of number of pro/con argument per Category
             labels = [o['category'] for o in self.category_stats]
             pro_counts = [o['pro_arg_count'] for o in self.category_stats]
             con_counts = [o['con_arg_count'] for o in self.category_stats]
