@@ -13,11 +13,12 @@ Its main use case is to generate the JSON string that will be used as the body p
 
 
 ### **start_requests(self)**
-To ensure that the ordering of the topics is based on their popularity, we append the GET-parameter `sort=popular` to the URL. Thus, this function sends a GET request to [https://www.debate.org/opinions/?sort=popular](https://www.debate.org/opinions/?sort=popular) by passing this URL to the `scrapy.http.Request` class and using parse_1 as the callback function. The response is written into the file `data.json`. If the file already exists, it is overwritten.
+It creates a data.json file or overwrites it if the file previously exists.
+To ensure that the ordering of the topics is based on their popularity, we append the GET-parameter `sort=popular` to the URL. Thus, this function sends a GET request to [https://www.debate.org/opinions/?sort=popular](https://www.debate.org/opinions/?sort=popular) by passing this URL to the `scrapy.http.Request` class and using parse_1 as the callback function.
 
 ### **parse_1(self, response)**
-This function dynamically selects the top 5 opinion pages (based on popularity) for crawling. The specific URLs for these pages are retrieved from the first 5 anchor tags (<a>) with the class `a-image-contain` and are then appended to the `base_url`.
-Finally, it yields the response for those webpages which is generated from `scrapy.http.Request` class.
+This function dynamically selects the top 5 opinion pages (based on popularity) for crawling. The specific URLs for these pages are retrieved from the first 5 anchor tags (`<a>`) with the class `a-image-contain` and are then appended to the `base_url`.
+Finally, it yields the response for the webpages generated from `scrapy.http.Request` class and uses the `parse` method as the callback function for further processing.
 
 
 ### **parse(self, response)** 
